@@ -35,7 +35,12 @@ public class OrderState
     }
 
     public void RemoveConfiguredPizza(Pizza pizza)
-{
-    Order.Pizzas.Remove(pizza);
-}
+    {
+        Order.Pizzas.Remove(pizza);
+    }
+
+    public void ResetOrder()
+    {
+        Order = new Order();
+    }
 }
