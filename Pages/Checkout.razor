@@ -1,11 +1,7 @@
 @page "/checkout"
-
-@using BlazingPizza.Services
-
 @inject OrderState OrderState
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
-
 @implements IDisposable
 
 <div class="main">
@@ -18,8 +14,9 @@
 
             <div class="checkout-delivery-address">
                 <h4>Deliver to...</h4>
-                @if (isError) {
-                    <div class="alert alert-danger">Please enter a name and address.</div>
+                @if (isError)
+                {
+                    <div class="alert alert-danger">Please enter a vaild name and address.</div>
                 }
                 <AddressEditor Address="Order.DeliveryAddress" />
             </div>
@@ -36,22 +33,8 @@
 @code {
     Order Order => OrderState.Order;
 
-    private EditContext editContext;
-
-    bool isError = false;
-
-    async Task PlaceOrder()
-    {
-        var response = await HttpClient.PostAsJsonAsync(NavigationManager.BaseUri + "orders", OrderState.Order);
-        var newOrderId= await response.Content.ReadFromJsonAsync<int>();
-        OrderState.ResetOrder();
-        NavigationManager.NavigateTo($"myorders/{newOrderId}");
-    }
-
-    protected void ShowError()
-    {
-        isError = true;
-    }
+    bool isError = true;
+    EditContext? editContext;
 
     protected override void OnInitialized()
     {
@@ -59,14 +42,25 @@
         editContext.OnFieldChanged += HandleFieldChanged;
     }
 
-    private void HandleFieldChanged(object sender, FieldChangedEventArgs e)
+    async Task PlaceOrder()
     {
-        isError = !editContext.Validate();
+        var response = await HttpClient.PostAsJsonAsync(
+            $"{NavigationManager.BaseUri}orders", OrderState.Order);
+        var newOrderId = await response.Content.ReadFromJsonAsync<int>();
+
+        OrderState.ResetOrder();
+        NavigationManager.NavigateTo($"myorders/{newOrderId}");
+    }
+
+    void HandleFieldChanged(object? sender, FieldChangedEventArgs e)
+    {
+        isError = editContext?.Validate() is false;
         StateHasChanged();
     }
 
     public void Dispose()
     {
+        if (editContext is null) return;
         editContext.OnFieldChanged -= HandleFieldChanged;
     }
 }
